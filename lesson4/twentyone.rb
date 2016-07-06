@@ -1,6 +1,6 @@
 require 'pry'
 
-SUITS = %w(C D H S)
+SUITS = %w(C D H S).freeze
 VALUES = (2..10).to_a.map!(&:to_s) + ['J', 'Q', 'K', 'A']
 
 def prompt(msg)
@@ -32,21 +32,23 @@ end
 def display_card(card)
   "#{card[0]}#{card[1]}"
 end
-  
-  
+
+def count_aces(hand)
+  hand.select { |card| card[0] == 'A' }.count
+end
 
 def calculate_value(hand)
   total = 0
   hand.each do |card|
-    total += card[0].to_i if (1..10).include?(card[0].to_i)
+    total += card[0].to_i if (1..10).cover?(card[0].to_i)
     total += 10 if ['J', 'Q', 'K'].include?(card[0])
-    total += 11 if card[0] == 'A' 
+    total += 11 if card[0] == 'A'
   end
-  
-  hand.select { |card| card[0] == 'A' }.count.times do
+
+  count_aces(hand).times do
     total -= 10 if total > 21
   end
-  
+
   total
 end
 
@@ -55,11 +57,10 @@ def busted?(hand)
 end
 
 def computer_win?(player_hand, computer_hand)
-  busted?(player_hand) || 
-  !busted?(computer_hand) &&
-  (calculate_value(player_hand) <= calculate_value(computer_hand))
+  busted?(player_hand) ||
+    !busted?(computer_hand) &&
+      (calculate_value(player_hand) <= calculate_value(computer_hand))
 end
-  
 
 deck = initialize_deck
 player_hand = []
@@ -76,43 +77,44 @@ loop do
   prompt "Dealer is showing #{display_card(computer_hand[0])}"
   prompt "Would you like to Hit or Stay?"
 
-  input =''
-  loop do 
+  input = ''
+  loop do
     input = gets.chomp
-    break if input.downcase.start_with?('s','h')
+    break if input.downcase.start_with?('s', 'h')
     prompt "Sorry, I don't understand. Would you like to Hit or Stay?"
   end
-  
+
   if input.downcase.start_with?('s')
     prompt "You stayed on #{calculate_value(player_hand)}\n\n"
     break
   end
-  
+
   new_card = deal_card(deck)
-  
+
   prompt "You got the #{display_card(new_card)}"
   player_hand.push(new_card)
-  
+
   if busted?(player_hand)
     prompt "Sorry, you busted.\n\n"
     break
   end
 end
-  
+
 loop do
   prompt "Computer has #{display_hand(computer_hand)}"
   prompt "Computer's current score is #{calculate_value(computer_hand)}"
-  
+
   if calculate_value(computer_hand) >= 17
-    prompt "Computer stays on #{calculate_value(computer_hand)} (17 or over)\n\n"
+    prompt "Computer stays on #{calculate_value(computer_hand)} (17 or over)
+    \n\n"
     break
   end
-  
+
   new_card = deal_card(deck)
-  
+
   prompt "Computer got the #{display_card(new_card)}"
   computer_hand.push(new_card)
-  
+
   if busted?(computer_hand)
     prompt "Computer busted\n\n"
     break
@@ -124,4 +126,3 @@ if computer_win?(player_hand, computer_hand)
 else
   prompt "Player WINS!"
 end
-
